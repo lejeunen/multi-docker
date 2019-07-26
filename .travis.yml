@@ -1,0 +1,33 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t lejeunen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true lejeunen/react-test npm test
+
+after_success:
+  - docker build -t lejeunen/multi-client ./client
+  - docker build -t lejeunen/multi-nginx ./nginx
+  - docker build -t lejeunen/multi-api ./api
+  - docker build -t lejeunen/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push lejeunen/multi-client
+  - docker push lejeunen/multi-nginx
+  - docker push lejeunen/multi-api
+  - docker push lejeunen/multi-worker
+
+deploy:
+  provider: elasticbeanstalk
+  region: "eu-central-1"
+  app: "nle"
+  env: "multi-docker-dev"
+  bucket_name: "elasticbeanstalk-eu-central-1-840205991060"
+  bucket_path: "nle"
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: "$AWS_SECRET_KEY"
