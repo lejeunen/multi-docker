@@ -13,14 +13,11 @@ services:
       - '3050:80'
   api:
     build:
-      context: ./api
       dockerfile: Dockerfile.dev
-    depends_on:
-      - postgres
-      - redis
+      context: ./server
     volumes:
       - /app/node_modules
-      - ./api:/app
+      - ./server:/app
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
